@@ -110,6 +110,7 @@ public class DetailActivity extends AppCompatActivity {
                 isInList = currentStatus != null;
                 displayShow(show);
                 updateTrackingSection();
+                loadEpisodeCapIfAvailable(show);
             }
 
             @Override
@@ -159,9 +160,16 @@ public class DetailActivity extends AppCompatActivity {
 
         if (currentShow.supportsEpisodeTracking()) {
             layoutTrackingEpisodes.setVisibility(View.VISIBLE);
-            tvTrackingEpisodes.setText(getString(
-                R.string.detail_tracking_episodes_value,
-                currentShow.getEpisodeProgress()));
+            if (currentShow.hasEpisodeCap()) {
+                tvTrackingEpisodes.setText(getString(
+                    R.string.detail_tracking_episodes_value_capped,
+                    currentShow.getEpisodeProgress(),
+                    currentShow.getTotalEpisodes()));
+            } else {
+                tvTrackingEpisodes.setText(getString(
+                    R.string.detail_tracking_episodes_value,
+                    currentShow.getEpisodeProgress()));
+            }
         } else {
             layoutTrackingEpisodes.setVisibility(View.GONE);
         }
@@ -208,10 +216,10 @@ public class DetailActivity extends AppCompatActivity {
         WatchStatus selectedStatus = currentStatus != null ? currentStatus : WatchStatus.PLANNED;
         spSheetStatus.setSelection(selectedStatus.ordinal());
 
-        final int[] episodeCount = {currentShow.getEpisodeProgress()};
+        final int[] episodeCount = {clampEpisodeCount(currentShow.getEpisodeProgress(), currentShow)};
         if (currentShow.supportsEpisodeTracking()) {
             layoutEpisodeControls.setVisibility(View.VISIBLE);
-            updateEpisodeCountLabel(tvEpisodeCount, episodeCount[0]);
+            updateEpisodeCountLabel(tvEpisodeCount, episodeCount[0], currentShow);
         } else {
             layoutEpisodeControls.setVisibility(View.GONE);
         }
@@ -219,13 +227,15 @@ public class DetailActivity extends AppCompatActivity {
         btnDecreaseEpisode.setOnClickListener(v -> {
             if (episodeCount[0] > 0) {
                 episodeCount[0]--;
-                updateEpisodeCountLabel(tvEpisodeCount, episodeCount[0]);
+                updateEpisodeCountLabel(tvEpisodeCount, episodeCount[0], currentShow);
             }
         });
 
         btnIncreaseEpisode.setOnClickListener(v -> {
-            episodeCount[0]++;
-            updateEpisodeCountLabel(tvEpisodeCount, episodeCount[0]);
+            if (!currentShow.hasEpisodeCap() || episodeCount[0] < currentShow.getTotalEpisodes()) {
+                episodeCount[0]++;
+                updateEpisodeCountLabel(tvEpisodeCount, episodeCount[0], currentShow);
+            }
         });
 
         float initialScore = currentShow.hasUserScore() ? currentShow.getUserScore() : 0f;
@@ -237,7 +247,9 @@ public class DetailActivity extends AppCompatActivity {
         btnSaveTracking.setOnClickListener(v -> {
             WatchStatus status = WatchStatus.values()[spSheetStatus.getSelectedItemPosition()];
             currentShow.setWatchStatus(status);
-            currentShow.setEpisodeProgress(currentShow.supportsEpisodeTracking() ? episodeCount[0] : 0);
+            currentShow.setEpisodeProgress(currentShow.supportsEpisodeTracking()
+                ? clampEpisodeCount(episodeCount[0], currentShow)
+                : 0);
 
             float sliderValue = sliderScore.getValue();
             currentShow.setUserScore(sliderValue > 0f ? sliderValue : null);
@@ -280,7 +292,14 @@ public class DetailActivity extends AppCompatActivity {
         }
     }
 
-    private void updateEpisodeCountLabel(TextView textView, int count) {
+    private void updateEpisodeCountLabel(TextView textView, int count, Show show) {
+        if (show != null && show.hasEpisodeCap()) {
+            textView.setText(getString(
+                R.string.detail_sheet_episode_counter_capped,
+                count,
+                show.getTotalEpisodes()));
+            return;
+        }
         textView.setText(getString(R.string.detail_sheet_episode_counter, count));
     }
 
@@ -326,5 +345,55 @@ public class DetailActivity extends AppCompatActivity {
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         contentLayout.setVisibility(show ? View.GONE : View.VISIBLE);
+    }
+
+    private void loadEpisodeCapIfAvailable(Show show) {
+        if (show == null || !show.supportsEpisodeTracking()) {
+            return;
+        }
+
+        int totalSeasons = parseTotalSeasons(show.getTotalSeasons());
+        if (totalSeasons <= 0) {
+            return;
+        }
+
+        repository.getTotalEpisodesCount(show.getImdbId(), totalSeasons, new ShowRepository.EpisodeCountCallback() {
+            @Override
+            public void onSuccess(int totalEpisodes) {
+                if (currentShow == null || !show.getImdbId().equals(currentShow.getImdbId())) {
+                    return;
+                }
+                currentShow.setTotalEpisodes(totalEpisodes);
+                currentShow.setEpisodeProgress(clampEpisodeCount(currentShow.getEpisodeProgress(), currentShow));
+                updateTrackingSection();
+            }
+
+            @Override
+            public void onError(String error) {
+                if (currentShow == null || !show.getImdbId().equals(currentShow.getImdbId())) {
+                    return;
+                }
+                currentShow.setTotalEpisodes(0);
+            }
+        });
+    }
+
+    private int parseTotalSeasons(String totalSeasonsText) {
+        if (totalSeasonsText == null || totalSeasonsText.trim().isEmpty()) {
+            return 0;
+        }
+        try {
+            return Math.max(0, Integer.parseInt(totalSeasonsText.trim()));
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
+
+    private int clampEpisodeCount(int value, Show show) {
+        int safeValue = Math.max(0, value);
+        if (show != null && show.hasEpisodeCap()) {
+            return Math.min(safeValue, show.getTotalEpisodes());
+        }
+        return safeValue;
     }
 }

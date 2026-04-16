@@ -12,6 +12,11 @@
     <string name="search_no_results">No results found</string>
     <string name="watchlist_empty">No shows in this list</string>
     <string name="profile_name">Movie Fan</string>
+    <string name="profile_edit_name">Edit name</string>
+    <string name="profile_edit_name_title">Edit profile name</string>
+    <string name="profile_name_hint">Enter your name</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_cancel">Cancel</string>
     <string name="profile_tagline">Track what you watch and keep your queue under control.</string>
     <string name="profile_total_tracked">Tracked Titles</string>
     <string name="profile_watched">Shows Watched</string>
@@ -33,6 +38,7 @@
     <string name="detail_tracking_episodes">Episodes</string>
     <string name="detail_tracking_episodes_default">0 watched</string>
     <string name="detail_tracking_episodes_value">%1$d watched</string>
+    <string name="detail_tracking_episodes_value_capped">%1$d / %2$d watched</string>
     <string name="detail_tracking_your_score">Your Score</string>
     <string name="detail_tracking_no_score">No score yet</string>
     <string name="detail_tracking_score_value">%1$s / 10</string>
@@ -40,6 +46,7 @@
     <string name="detail_sheet_status_label">Watch Status</string>
     <string name="detail_sheet_episodes_label">Episode Counter</string>
     <string name="detail_sheet_episode_counter">%1$d episodes watched</string>
+    <string name="detail_sheet_episode_counter_capped">%1$d / %2$d episodes watched</string>
     <string name="detail_sheet_score_label">Your Score</string>
     <string name="detail_sheet_score_empty">Not rated</string>
     <string name="detail_sheet_score_value">%1$s / 10</string>
@@ -48,6 +55,7 @@
     <string name="detail_sheet_remove_from_list">Remove from List</string>
     <string name="card_episodes_watched_default">Episodes watched: 0</string>
     <string name="card_episodes_watched">Episodes watched: %1$d</string>
+    <string name="card_episodes_watched_capped">Episodes watched: %1$d / %2$d</string>
     <string name="card_user_score_empty">Your score: Not rated</string>
     <string name="card_user_score_value">Your score: %1$s / 10</string>
 </resources>

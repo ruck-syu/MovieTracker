@@ -4,6 +4,7 @@ import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
 import com.example.movietracker.model.SearchResponse;
+import com.example.movietracker.model.SeasonResponse;
 import com.example.movietracker.model.Show;
 
 public interface OmdbApiService {
@@ -24,6 +25,13 @@ public interface OmdbApiService {
     @GET("/")
     Call<Show> getShowByTitle(
         @Query("t") String title,
+        @Query("apikey") String apiKey
+    );
+
+    @GET("/")
+    Call<SeasonResponse> getSeasonEpisodes(
+        @Query("i") String imdbId,
+        @Query("Season") int season,
         @Query("apikey") String apiKey
     );
 }

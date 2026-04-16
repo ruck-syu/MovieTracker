@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="24dp"
-            app:cardElevation="4dp">
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -29,10 +29,10 @@
                 <ImageView
                     android:layout_width="56dp"
                     android:layout_height="56dp"
-                    android:background="@color/primary_light"
+                    android:background="@drawable/bg_input_rounded"
                     android:padding="12dp"
                     android:src="@drawable/ic_nav_profile"
-                    android:tint="@color/primary" />
+                    android:tint="@color/accent" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -42,6 +42,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/tvProfileName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/profile_name"
@@ -59,6 +60,20 @@
 
                 </LinearLayout>
 
+                <TextView
+                    android:id="@+id/tvEditProfileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_button_secondary"
+                    android:paddingLeft="14dp"
+                    android:paddingTop="8dp"
+                    android:paddingRight="14dp"
+                    android:paddingBottom="8dp"
+                    android:text="@string/profile_edit_name"
+                    android:textColor="@color/black"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
@@ -74,7 +89,7 @@
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
                 app:cardCornerRadius="22dp"
-                app:cardElevation="3dp">
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -110,7 +125,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 app:cardCornerRadius="22dp"
-                app:cardElevation="3dp">
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -154,7 +169,7 @@
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
                 app:cardCornerRadius="22dp"
-                app:cardElevation="3dp">
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -190,7 +205,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 app:cardCornerRadius="22dp"
-                app:cardElevation="3dp">
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -227,7 +242,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             app:cardCornerRadius="22dp"
-            app:cardElevation="3dp">
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"

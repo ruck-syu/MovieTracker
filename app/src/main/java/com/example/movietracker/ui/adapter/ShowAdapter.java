@@ -94,9 +94,16 @@ public class ShowAdapter extends RecyclerView.Adapter<ShowAdapter.ShowViewHolder
 
                 if (show.supportsEpisodeTracking()) {
                     tvEpisodes.setVisibility(View.VISIBLE);
-                    tvEpisodes.setText(itemView.getContext().getString(
-                        R.string.card_episodes_watched,
-                        show.getEpisodeProgress()));
+                    if (show.hasEpisodeCap()) {
+                        tvEpisodes.setText(itemView.getContext().getString(
+                            R.string.card_episodes_watched_capped,
+                            show.getEpisodeProgress(),
+                            show.getTotalEpisodes()));
+                    } else {
+                        tvEpisodes.setText(itemView.getContext().getString(
+                            R.string.card_episodes_watched,
+                            show.getEpisodeProgress()));
+                    }
                 } else {
                     tvEpisodes.setVisibility(View.GONE);
                 }

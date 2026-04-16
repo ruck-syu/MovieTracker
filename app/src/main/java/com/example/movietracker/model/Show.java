@@ -37,6 +37,7 @@ public class Show {
     private WatchStatus watchStatus;
     private long dateAdded;
     private int episodeProgress;
+    private int totalEpisodes;
     private Float userScore;
 
     public Show() {}
@@ -77,6 +78,8 @@ public class Show {
     public void setDateAdded(long dateAdded) { this.dateAdded = dateAdded; }
     public int getEpisodeProgress() { return episodeProgress; }
     public void setEpisodeProgress(int episodeProgress) { this.episodeProgress = Math.max(0, episodeProgress); }
+    public int getTotalEpisodes() { return totalEpisodes; }
+    public void setTotalEpisodes(int totalEpisodes) { this.totalEpisodes = Math.max(0, totalEpisodes); }
     public Float getUserScore() { return userScore; }
     public void setUserScore(Float userScore) { this.userScore = userScore; }
     public String getDisplayType() {
@@ -91,5 +94,8 @@ public class Show {
     }
     public boolean supportsEpisodeTracking() {
         return "series".equalsIgnoreCase(type);
+    }
+    public boolean hasEpisodeCap() {
+        return totalEpisodes > 0;
     }
 }

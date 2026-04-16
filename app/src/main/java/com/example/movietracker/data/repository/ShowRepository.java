@@ -9,6 +9,7 @@ import com.example.movietracker.data.api.OmdbApiService;
 import com.example.movietracker.data.database.DatabaseHelper;
 import com.example.movietracker.model.ProfileStats;
 import com.example.movietracker.model.SearchResponse;
+import com.example.movietracker.model.SeasonResponse;
 import com.example.movietracker.model.Show;
 import com.example.movietracker.model.WatchStatus;
 
@@ -33,6 +34,11 @@ public class ShowRepository {
 
     public interface DetailCallback {
         void onSuccess(Show show);
+        void onError(String error);
+    }
+
+    public interface EpisodeCountCallback {
+        void onSuccess(int totalEpisodes);
         void onError(String error);
     }
 
@@ -108,6 +114,62 @@ public class ShowRepository {
                 callback.onError("Network error: " + t.getMessage());
             }
         });
+    }
+
+    public void getTotalEpisodesCount(String imdbId, int totalSeasons, EpisodeCountCallback callback) {
+        if (imdbId == null || imdbId.trim().isEmpty()) {
+            callback.onError("Invalid IMDb id");
+            return;
+        }
+        if (totalSeasons <= 0) {
+            callback.onError("Episode data unavailable");
+            return;
+        }
+        fetchSeasonEpisodeCount(imdbId, 1, totalSeasons, 0, callback);
+    }
+
+    private void fetchSeasonEpisodeCount(
+        String imdbId,
+        int currentSeason,
+        int totalSeasons,
+        int runningTotal,
+        EpisodeCountCallback callback
+    ) {
+        apiService.getSeasonEpisodes(imdbId, currentSeason, ApiClient.API_KEY)
+            .enqueue(new Callback<SeasonResponse>() {
+                @Override
+                public void onResponse(Call<SeasonResponse> call, Response<SeasonResponse> response) {
+                    if (!response.isSuccessful() || response.body() == null) {
+                        callback.onError("Episode data unavailable");
+                        return;
+                    }
+
+                    SeasonResponse seasonResponse = response.body();
+                    if (!seasonResponse.isSuccess() || seasonResponse.getEpisodes() == null) {
+                        callback.onError(seasonResponse.getError() != null
+                            ? seasonResponse.getError()
+                            : "Episode data unavailable");
+                        return;
+                    }
+
+                    int newTotal = runningTotal + seasonResponse.getEpisodes().size();
+                    if (currentSeason >= totalSeasons) {
+                        if (newTotal > 0) {
+                            callback.onSuccess(newTotal);
+                        } else {
+                            callback.onError("Episode data unavailable");
+                        }
+                        return;
+                    }
+
+                    fetchSeasonEpisodeCount(imdbId, currentSeason + 1, totalSeasons, newTotal, callback);
+                }
+
+                @Override
+                public void onFailure(Call<SeasonResponse> call, Throwable t) {
+                    callback.onError("Network error: " + t.getMessage());
+                }
+            });
     }
 
     public void addToList(Show show, WatchStatus status, DbOperationCallback callback) {
