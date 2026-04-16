@@ -199,6 +199,32 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return stats;
     }
 
+    public List<Show> getTopRatedShows(int limit) {
+        List<Show> shows = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_SHOWS, null, COL_USER_SCORE + " > 0", null, null, null, COL_USER_SCORE + " DESC, " + COL_DATE_ADDED + " DESC", String.valueOf(limit));
+        while (cursor.moveToNext()) {
+            shows.add(cursorToShow(cursor));
+        }
+        cursor.close();
+        return shows;
+    }
+
+    public java.util.Map<String, Integer> getTypeDistribution() {
+        java.util.Map<String, Integer> distribution = new java.util.HashMap<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT LOWER(" + COL_TYPE + "), COUNT(*) FROM " + TABLE_SHOWS + " GROUP BY LOWER(" + COL_TYPE + ")", null);
+        while (cursor.moveToNext()) {
+            String type = cursor.getString(0);
+            int count = cursor.getInt(1);
+            if (type != null) {
+                distribution.put(type, count);
+            }
+        }
+        cursor.close();
+        return distribution;
+    }
+
     private Show cursorToShow(Cursor cursor) {
         Show show = new Show();
         show.setImdbId(cursor.getString(cursor.getColumnIndexOrThrow(COL_IMDB_ID)));

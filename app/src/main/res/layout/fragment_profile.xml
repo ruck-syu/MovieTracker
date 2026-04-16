@@ -51,12 +51,14 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvProfileTier"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="@string/profile_tagline"
-                        android:textColor="@color/gray"
-                        android:textSize="14sp" />
+                        android:text="Newcomer"
+                        android:textColor="@color/accent"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
                 </LinearLayout>
 
@@ -283,6 +285,69 @@
                     android:textColor="@color/gray"
                     android:textSize="14sp" />
 
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Favorites Carousel -->
+        <TextView
+            android:id="@+id/tvFavoritesTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp"
+            android:text="Highest Rated"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvFavorites"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:clipToPadding="false"
+            android:orientation="horizontal"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            android:visibility="gone" />
+
+        <!-- Analytics Section -->
+        <TextView
+            android:id="@+id/tvAnalyticsTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="Media Distribution"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cvAnalytics"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/card_background"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.example.movietracker.ui.profile.PieChartView
+                    android:id="@+id/pieChartView"
+                    android:layout_width="160dp"
+                    android:layout_height="160dp"
+                    android:layout_gravity="center" />
+
+                <!-- Legend could go here if needed, but keeping it simple for now -->
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>

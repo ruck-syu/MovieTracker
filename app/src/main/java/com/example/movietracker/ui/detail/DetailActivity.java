@@ -40,10 +40,6 @@ public class DetailActivity extends AppCompatActivity {
     private TextView tvWriter;
     private TextView tvActors;
     private TextView tvPlot;
-    private TextView tvTrackingStatus;
-    private View layoutTrackingEpisodes;
-    private TextView tvTrackingEpisodes;
-    private TextView tvTrackingScore;
     private TextView tvManageTracking;
     private ProgressBar progressBar;
     private View contentLayout;
@@ -76,10 +72,6 @@ public class DetailActivity extends AppCompatActivity {
         tvWriter = findViewById(R.id.tvWriter);
         tvActors = findViewById(R.id.tvActors);
         tvPlot = findViewById(R.id.tvPlot);
-        tvTrackingStatus = findViewById(R.id.tvTrackingStatus);
-        layoutTrackingEpisodes = findViewById(R.id.layoutTrackingEpisodes);
-        tvTrackingEpisodes = findViewById(R.id.tvTrackingEpisodes);
-        tvTrackingScore = findViewById(R.id.tvTrackingScore);
         tvManageTracking = findViewById(R.id.tvAddToList);
         progressBar = findViewById(R.id.progressBar);
         contentLayout = findViewById(R.id.contentLayout);
@@ -151,35 +143,9 @@ public class DetailActivity extends AppCompatActivity {
         }
 
         if (isInList && currentStatus != null) {
-            tvTrackingStatus.setText(currentStatus.getDisplayName());
-            tvManageTracking.setText(R.string.detail_edit_tracking);
+            tvManageTracking.setText(currentStatus.getDisplayName());
         } else {
-            tvTrackingStatus.setText(R.string.detail_tracking_not_added);
             tvManageTracking.setText(R.string.detail_add_to_my_list);
-        }
-
-        if (currentShow.supportsEpisodeTracking()) {
-            layoutTrackingEpisodes.setVisibility(View.VISIBLE);
-            if (currentShow.hasEpisodeCap()) {
-                tvTrackingEpisodes.setText(getString(
-                    R.string.detail_tracking_episodes_value_capped,
-                    currentShow.getEpisodeProgress(),
-                    currentShow.getTotalEpisodes()));
-            } else {
-                tvTrackingEpisodes.setText(getString(
-                    R.string.detail_tracking_episodes_value,
-                    currentShow.getEpisodeProgress()));
-            }
-        } else {
-            layoutTrackingEpisodes.setVisibility(View.GONE);
-        }
-
-        if (currentShow.hasUserScore()) {
-            tvTrackingScore.setText(getString(
-                R.string.detail_tracking_score_value,
-                String.format(Locale.getDefault(), "%.1f", currentShow.getUserScore())));
-        } else {
-            tvTrackingScore.setText(R.string.detail_tracking_no_score);
         }
     }
 

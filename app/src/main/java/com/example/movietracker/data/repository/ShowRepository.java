@@ -55,6 +55,10 @@ public class ShowRepository {
         void onSuccess(ProfileStats stats);
     }
 
+    public interface TypeDistributionCallback {
+        void onSuccess(java.util.Map<String, Integer> distribution);
+    }
+
     public ShowRepository(Context context) {
         this.apiService = ApiClient.getApiService();
         this.databaseHelper = new DatabaseHelper(context);
@@ -230,6 +234,20 @@ public class ShowRepository {
         executor.execute(() -> {
             ProfileStats stats = databaseHelper.getProfileStats();
             mainHandler.post(() -> callback.onSuccess(stats));
+        });
+    }
+
+    public void getTopRatedShows(int limit, ListCallback callback) {
+        executor.execute(() -> {
+            List<Show> shows = databaseHelper.getTopRatedShows(limit);
+            mainHandler.post(() -> callback.onSuccess(shows));
+        });
+    }
+
+    public void getTypeDistribution(TypeDistributionCallback callback) {
+        executor.execute(() -> {
+            java.util.Map<String, Integer> distribution = databaseHelper.getTypeDistribution();
+            mainHandler.post(() -> callback.onSuccess(distribution));
         });
     }
 

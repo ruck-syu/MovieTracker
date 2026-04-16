@@ -1,10 +1,12 @@
 package com.example.movietracker.ui.search;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -101,6 +103,13 @@ public class SearchFragment extends Fragment {
     }
 
     private void performSearch() {
+        if (getView() != null) {
+            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+            }
+        }
+
         String query = etSearch.getText().toString().trim();
         if (query.isEmpty()) {
             Toast.makeText(requireContext(), "Please enter a search term", Toast.LENGTH_SHORT).show();

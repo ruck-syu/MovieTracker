@@ -9,7 +9,12 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.movietracker.model.Show;
+import java.util.List;
+import java.util.Map;
 import androidx.appcompat.app.AlertDialog;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -33,6 +38,14 @@ public class ProfileFragment extends Fragment {
     private TextView tvWatchingNow;
     private TextView tvPlannedQueue;
     private TextView tvSummary;
+    private TextView tvProfileTier;
+
+    private FavoritesAdapter favoritesAdapter;
+    private View tvFavoritesTitle;
+    private RecyclerView rvFavorites;
+    private View tvAnalyticsTitle;
+    private View cvAnalytics;
+    private PieChartView pieChartView;
 
     public ProfileFragment() {
         super(R.layout.fragment_profile);
@@ -58,6 +71,16 @@ public class ProfileFragment extends Fragment {
         tvWatchingNow = view.findViewById(R.id.tvProfileWatchingNow);
         tvPlannedQueue = view.findViewById(R.id.tvProfilePlannedQueue);
         tvSummary = view.findViewById(R.id.tvProfileSummary);
+        tvProfileTier = view.findViewById(R.id.tvProfileTier);
+
+        tvFavoritesTitle = view.findViewById(R.id.tvFavoritesTitle);
+        rvFavorites = view.findViewById(R.id.rvFavorites);
+        tvAnalyticsTitle = view.findViewById(R.id.tvAnalyticsTitle);
+        cvAnalytics = view.findViewById(R.id.cvAnalytics);
+        pieChartView = view.findViewById(R.id.pieChartView);
+
+        favoritesAdapter = new FavoritesAdapter();
+        rvFavorites.setAdapter(favoritesAdapter);
 
         tvProfileName.setText(getSavedProfileName());
         tvEditProfileName.setOnClickListener(v -> showEditNameDialog());
@@ -110,6 +133,8 @@ public class ProfileFragment extends Fragment {
 
     private void loadProfile() {
         repository.getProfileStats(this::bindProfile);
+        repository.getTopRatedShows(10, this::bindFavorites);
+        repository.getTypeDistribution(this::bindAnalytics);
     }
 
     private void bindProfile(ProfileStats stats) {
@@ -117,6 +142,8 @@ public class ProfileFragment extends Fragment {
         tvWatched.setText(String.valueOf(stats.getCompletedCount()));
         tvWatchingNow.setText(String.valueOf(stats.getWatchingCount()));
         tvPlannedQueue.setText(String.valueOf(stats.getPlannedCount()));
+        
+        tvProfileTier.setText(getUserTier(stats.getCompletedCount()));
 
         if (stats.hasAverageRating()) {
             tvAverageRating.setText(String.format(Locale.getDefault(), "%.1f / 10", stats.getAverageRating()));
@@ -135,6 +162,37 @@ public class ProfileFragment extends Fragment {
                 R.string.profile_summary_ready,
                 stats.getCompletedCount(),
                 stats.getTotalTracked()));
+        }
+    }
+
+    private String getUserTier(int watchedCount) {
+        if (watchedCount >= 250) return "Master Tracker";
+        if (watchedCount >= 100) return "Cinephile";
+        if (watchedCount >= 50) return "Film Buff";
+        if (watchedCount >= 10) return "Regular Watcher";
+        if (watchedCount > 0) return "Casual Viewer";
+        return "Newcomer";
+    }
+
+    private void bindFavorites(List<Show> shows) {
+        if (shows != null && !shows.isEmpty()) {
+            tvFavoritesTitle.setVisibility(View.VISIBLE);
+            rvFavorites.setVisibility(View.VISIBLE);
+            favoritesAdapter.setShows(shows);
+        } else {
+            tvFavoritesTitle.setVisibility(View.GONE);
+            rvFavorites.setVisibility(View.GONE);
+        }
+    }
+
+    private void bindAnalytics(Map<String, Integer> distribution) {
+        if (distribution != null && !distribution.isEmpty()) {
+            tvAnalyticsTitle.setVisibility(View.VISIBLE);
+            cvAnalytics.setVisibility(View.VISIBLE);
+            pieChartView.setData(distribution);
+        } else {
+            tvAnalyticsTitle.setVisibility(View.GONE);
+            cvAnalytics.setVisibility(View.GONE);
         }
     }
 }
