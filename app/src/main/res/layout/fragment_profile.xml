@@ -27,6 +27,7 @@
                 android:padding="20dp">
 
                 <ImageView
+                    android:id="@+id/ivProfilePicture"
                     android:layout_width="56dp"
                     android:layout_height="56dp"
                     android:background="@drawable/bg_input_rounded"
@@ -351,6 +352,16 @@
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
+
+        <Button
+            android:id="@+id/btnSignOut"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/bg_button_danger"
+            android:text="Sign Out"
+            android:textColor="@color/white" />
 
     </LinearLayout>
 

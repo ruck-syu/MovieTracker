@@ -4,7 +4,19 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M31,31h46v46h-46z" />
+    <group
+        android:scaleX="2.5"
+        android:scaleY="2.5"
+        android:translateX="24"
+        android:translateY="24">
+        <!-- Film strip base -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M18,3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3H18z M8,17H6v-2h2V17z M8,13H6v-2h2V13z M8,9H6V7h2V9z M18,17h-2v-2h2V17z M18,13h-2v-2h2V13z M18,9h-2V7h2V9z"/>
+        
+        <!-- Play button inside the film strip -->
+        <path
+            android:fillColor="#88BDF2"
+            android:pathData="M10,8.5 l5.5,3.5 l-5.5,3.5 z" />
+    </group>
 </vector>

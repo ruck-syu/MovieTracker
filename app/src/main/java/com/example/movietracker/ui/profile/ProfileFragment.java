@@ -25,9 +25,35 @@ import com.example.movietracker.model.ProfileStats;
 
 import java.util.Locale;
 
+import android.content.Intent;
+import android.widget.Button;
+
+import com.example.movietracker.ui.login.LoginActivity;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
+
+import android.net.Uri;
+import android.widget.ImageView;
+import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public class ProfileFragment extends Fragment {
     private static final String PREFS_NAME = "movie_tracker_prefs";
     private static final String KEY_PROFILE_NAME = "profile_name";
+    private static final String KEY_PROFILE_PIC_URI = "profile_pic_uri";
 
     private ShowRepository repository;
 
@@ -82,7 +108,26 @@ public class ProfileFragment extends Fragment {
         favoritesAdapter = new FavoritesAdapter();
         rvFavorites.setAdapter(favoritesAdapter);
 
-        tvProfileName.setText(getSavedProfileName());
+        Button btnSignOut = view.findViewById(R.id.btnSignOut);
+        btnSignOut.setOnClickListener(v -> signOut());
+
+        ImageView ivProfilePicture = view.findViewById(R.id.ivProfilePicture);
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            String displayName = user.getDisplayName();
+            if (displayName != null && !displayName.isEmpty()) {
+                tvProfileName.setText(displayName);
+            } else if (user.getEmail() != null) {
+                tvProfileName.setText(user.getEmail());
+            } else {
+                tvProfileName.setText(getSavedProfileName());
+            }
+        } else {
+            tvProfileName.setText(getSavedProfileName());
+        }
+        
+        tvEditProfileName.setVisibility(View.VISIBLE);
         tvEditProfileName.setOnClickListener(v -> showEditNameDialog());
 
         loadProfile();
@@ -194,5 +239,19 @@ public class ProfileFragment extends Fragment {
             tvAnalyticsTitle.setVisibility(View.GONE);
             cvAnalytics.setVisibility(View.GONE);
         }
+    }
+
+    private void signOut() {
+        FirebaseAuth.getInstance().signOut();
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(requireActivity(), gso);
+        mGoogleSignInClient.signOut().addOnCompleteListener(requireActivity(), task -> {
+            Intent intent = new Intent(requireActivity(), LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+        });
     }
 }
