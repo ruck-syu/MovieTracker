@@ -6,6 +6,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 import com.example.movietracker.model.ProfileStats;
 import com.example.movietracker.model.Show;
 import com.example.movietracker.model.WatchStatus;
@@ -14,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
-    private static final String DATABASE_NAME = "MovieTracker.db";
     private static final int DATABASE_VERSION = 3;
     private static final String TABLE_SHOWS = "shows";
     private static final String COL_IMDB_ID = "imdb_id";
@@ -41,8 +43,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         COL_USER_SCORE + " REAL, " +
         COL_DATE_ADDED + " INTEGER)";
 
+    private static String getUidDatabaseName() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            return "MovieTracker_" + user.getUid() + ".db";
+        }
+        return "MovieTracker_default.db";
+    }
+
     public DatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        super(context, getUidDatabaseName(), null, DATABASE_VERSION);
     }
 
     @Override
