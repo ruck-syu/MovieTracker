@@ -21,6 +21,8 @@ public class Show {
     private String runtime;
     @SerializedName("Genre")
     private String genre;
+    @SerializedName("Language")
+    private String language;
     @SerializedName("Director")
     private String director;
     @SerializedName("Writer")
@@ -62,6 +64,8 @@ public class Show {
     public void setGenre(String genre) { this.genre = genre; }
     public String getDirector() { return director; }
     public void setDirector(String director) { this.director = director; }
+    public String getLanguage() { return language; }
+    public void setLanguage(String language) { this.language = language; }
     public String getWriter() { return writer; }
     public void setWriter(String writer) { this.writer = writer; }
     public String getActors() { return actors; }

@@ -11,10 +11,12 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 import java.util.Map;
+import java.util.Locale;
 
 public class PieChartView extends View {
     private Map<String, Integer> data;
-    private Paint paint;
+    private Paint slicePaint;
+    private Paint labelPaint;
     private RectF rectF;
     private int total = 0;
     
@@ -37,8 +39,17 @@ public class PieChartView extends View {
     }
 
     private void init() {
-        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setStyle(Paint.Style.FILL);
+        float scaledDensity = getResources().getDisplayMetrics().scaledDensity;
+
+        slicePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        slicePaint.setStyle(Paint.Style.FILL);
+
+        labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setColor(Color.WHITE);
+        labelPaint.setTextAlign(Paint.Align.CENTER);
+        labelPaint.setTextSize(10f * scaledDensity);
+        labelPaint.setFakeBoldText(true);
+
         rectF = new RectF();
     }
 
@@ -70,23 +81,44 @@ public class PieChartView extends View {
         super.onDraw(canvas);
 
         if (total == 0 || data == null || data.isEmpty()) {
-            paint.setColor(Color.LTGRAY);
-            canvas.drawOval(rectF, paint);
+            slicePaint.setColor(Color.LTGRAY);
+            canvas.drawOval(rectF, slicePaint);
             return;
         }
 
         float startAngle = -90f; // Start at top
         int colorIndex = 0;
+        float centerX = rectF.centerX();
+        float centerY = rectF.centerY();
+        float labelRadius = rectF.width() * 0.28f;
 
         for (Map.Entry<String, Integer> entry : data.entrySet()) {
             int count = entry.getValue();
             if (count == 0) continue;
 
             float sweepAngle = 360f * count / total;
-            paint.setColor(colors[colorIndex % colors.length]);
-            canvas.drawArc(rectF, startAngle, sweepAngle, true, paint);
+            slicePaint.setColor(colors[colorIndex % colors.length]);
+            canvas.drawArc(rectF, startAngle, sweepAngle, true, slicePaint);
+
+            if (sweepAngle >= 24f) {
+                float midAngle = startAngle + (sweepAngle / 2f);
+                double radians = Math.toRadians(midAngle);
+                float labelX = (float) (centerX + Math.cos(radians) * labelRadius);
+                float labelY = (float) (centerY + Math.sin(radians) * labelRadius + (labelPaint.getTextSize() * 0.35f));
+                canvas.drawText(formatLabel(entry.getKey(), count), labelX, labelY, labelPaint);
+            }
+
             startAngle += sweepAngle;
             colorIndex++;
         }
+    }
+
+    private String formatLabel(String key, int count) {
+        int percentage = Math.round((count * 100f) / total);
+        String safeKey = key == null ? "" : key.trim().toLowerCase(Locale.US);
+        if (!safeKey.isEmpty()) {
+            safeKey = Character.toUpperCase(safeKey.charAt(0)) + safeKey.substring(1);
+        }
+        return safeKey + " " + percentage + "%";
     }
 }
