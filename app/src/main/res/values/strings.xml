@@ -11,6 +11,13 @@
     <string name="search_button">Search</string>
     <string name="search_no_results">No results found</string>
     <string name="watchlist_empty">No shows in this list</string>
+    <string name="watchlist_filter_all">Filter: All</string>
+    <string name="watchlist_filter_movies">Filter: Movies</string>
+    <string name="watchlist_filter_series">Filter: Series</string>
+    <string name="watchlist_sort_recent">Sort: Recent</string>
+    <string name="watchlist_sort_title_asc">Sort: A-Z</string>
+    <string name="watchlist_sort_title_desc">Sort: Z-A</string>
+    <string name="watchlist_sort_score_desc">Sort: Score</string>
     <string name="profile_name">Movie Fan</string>
     <string name="profile_edit_name">Edit name</string>
     <string name="profile_edit_name_title">Edit profile name</string>
@@ -58,4 +65,21 @@
     <string name="card_episodes_watched_capped">Episodes watched: %1$d / %2$d</string>
     <string name="card_user_score_empty">Your score: Not rated</string>
     <string name="card_user_score_value">Your score: %1$s / 10</string>
+    <string name="recommendation_title">Recommended for You</string>
+    <string name="recommendation_empty_default">We need a bit more watch history to personalize recommendations.</string>
+    <string name="recommendation_score_badge">Match %1$s</string>
+    <string name="profile_analytics_title">Data Analytics</string>
+    <string name="profile_release_year_title">Titles by release year</string>
+    <string name="profile_episode_title">Titles by episode count</string>
+    <string name="backup_export">Export List</string>
+    <string name="backup_import">Import List</string>
+    <string name="backup_export_cancelled">Export canceled</string>
+    <string name="backup_export_success">List exported successfully</string>
+    <string name="backup_export_failed">Could not export list</string>
+    <string name="backup_export_failed_with_error">Could not export list: %1$s</string>
+    <string name="backup_import_cancelled">Import canceled</string>
+    <string name="backup_import_invalid">Invalid backup file</string>
+    <string name="backup_import_success">Imported %1$d titles</string>
+    <string name="backup_import_failed">Could not import list</string>
+    <string name="backup_import_failed_with_error">Could not import list: %1$s</string>
 </resources>

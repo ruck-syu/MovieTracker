@@ -5,7 +5,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.movietracker.R;
+import com.example.movietracker.data.database.DatabaseHelper;
 import com.example.movietracker.data.repository.ShowRepository;
 import com.example.movietracker.model.Show;
 import com.example.movietracker.model.WatchStatus;
@@ -22,15 +26,36 @@ import com.example.movietracker.ui.adapter.ShowAdapter;
 import com.example.movietracker.ui.detail.DetailActivity;
 import com.google.android.material.tabs.TabLayout;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class WatchlistFragment extends Fragment {
+    private enum WatchlistFilter {
+        ALL,
+        MOVIES,
+        SERIES
+    }
+
     private TabLayout tabLayout;
     private RecyclerView rvWatchlist;
     private TextView tvEmpty;
     private ProgressBar progressBar;
+    private Spinner spFilter;
+    private Spinner spSort;
 
     private ShowAdapter adapter;
     private ShowRepository repository;
     private WatchStatus currentStatus = WatchStatus.WATCHING;
+    private final DatabaseHelper.WatchlistSort[] tabSortSelections = new DatabaseHelper.WatchlistSort[]{
+        DatabaseHelper.WatchlistSort.RECENT,
+        DatabaseHelper.WatchlistSort.RECENT,
+        DatabaseHelper.WatchlistSort.RECENT
+    };
+    private final WatchlistFilter[] tabFilterSelections = new WatchlistFilter[]{
+        WatchlistFilter.ALL,
+        WatchlistFilter.ALL,
+        WatchlistFilter.ALL
+    };
 
     public WatchlistFragment() {
         super(R.layout.fragment_watchlist);
@@ -52,9 +77,13 @@ public class WatchlistFragment extends Fragment {
         rvWatchlist = view.findViewById(R.id.rvWatchlist);
         tvEmpty = view.findViewById(R.id.tvEmpty);
         progressBar = view.findViewById(R.id.progressBar);
+        spFilter = view.findViewById(R.id.spFilter);
+        spSort = view.findViewById(R.id.spSort);
 
         setupTabs();
         setupRecyclerView();
+        setupFilterOptions();
+        setupSortOptions();
         loadShows(currentStatus);
     }
 
@@ -77,6 +106,8 @@ public class WatchlistFragment extends Fragment {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 currentStatus = WatchStatus.values()[tab.getPosition()];
+                spFilter.setSelection(filterToIndex(tabFilterSelections[currentStatus.ordinal()]));
+                spSort.setSelection(sortToIndex(tabSortSelections[currentStatus.ordinal()]));
                 loadShows(currentStatus);
             }
 
@@ -90,6 +121,95 @@ public class WatchlistFragment extends Fragment {
         });
     }
 
+    private void setupSortOptions() {
+        String[] sortOptions = new String[]{
+            getString(R.string.watchlist_sort_recent),
+            getString(R.string.watchlist_sort_title_asc),
+            getString(R.string.watchlist_sort_title_desc),
+            getString(R.string.watchlist_sort_score_desc)
+        };
+
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            sortOptions
+        );
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spSort.setAdapter(spinnerAdapter);
+        spSort.setSelection(sortToIndex(tabSortSelections[currentStatus.ordinal()]));
+        spSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                DatabaseHelper.WatchlistSort selectedSort = indexToSort(position);
+                if (tabSortSelections[currentStatus.ordinal()] != selectedSort) {
+                    tabSortSelections[currentStatus.ordinal()] = selectedSort;
+                    loadShows(currentStatus);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
+    private void setupFilterOptions() {
+        String[] filterOptions = new String[]{
+            getString(R.string.watchlist_filter_all),
+            getString(R.string.watchlist_filter_movies),
+            getString(R.string.watchlist_filter_series)
+        };
+
+        ArrayAdapter<String> filterAdapter = new ArrayAdapter<>(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            filterOptions
+        );
+        filterAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spFilter.setAdapter(filterAdapter);
+        spFilter.setSelection(filterToIndex(tabFilterSelections[currentStatus.ordinal()]));
+        spFilter.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                WatchlistFilter selectedFilter = indexToFilter(position);
+                if (tabFilterSelections[currentStatus.ordinal()] != selectedFilter) {
+                    tabFilterSelections[currentStatus.ordinal()] = selectedFilter;
+                    loadShows(currentStatus);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
+    private int filterToIndex(WatchlistFilter filter) {
+        if (filter == WatchlistFilter.MOVIES) return 1;
+        if (filter == WatchlistFilter.SERIES) return 2;
+        return 0;
+    }
+
+    private WatchlistFilter indexToFilter(int index) {
+        if (index == 1) return WatchlistFilter.MOVIES;
+        if (index == 2) return WatchlistFilter.SERIES;
+        return WatchlistFilter.ALL;
+    }
+
+    private int sortToIndex(DatabaseHelper.WatchlistSort sort) {
+        if (sort == DatabaseHelper.WatchlistSort.TITLE_ASC) return 1;
+        if (sort == DatabaseHelper.WatchlistSort.TITLE_DESC) return 2;
+        if (sort == DatabaseHelper.WatchlistSort.SCORE_DESC) return 3;
+        return 0;
+    }
+
+    private DatabaseHelper.WatchlistSort indexToSort(int index) {
+        if (index == 1) return DatabaseHelper.WatchlistSort.TITLE_ASC;
+        if (index == 2) return DatabaseHelper.WatchlistSort.TITLE_DESC;
+        if (index == 3) return DatabaseHelper.WatchlistSort.SCORE_DESC;
+        return DatabaseHelper.WatchlistSort.RECENT;
+    }
+
     private void setupRecyclerView() {
         adapter = new ShowAdapter();
         adapter.setShowTrackingDetails(true);
@@ -100,15 +220,35 @@ public class WatchlistFragment extends Fragment {
 
     private void loadShows(WatchStatus status) {
         showLoading(true);
-        repository.getShowsByStatus(status, shows -> {
+        DatabaseHelper.WatchlistSort currentSort = tabSortSelections[status.ordinal()];
+        repository.getShowsByStatus(status, currentSort, shows -> {
             showLoading(false);
-            if (shows.isEmpty()) {
+            List<Show> filteredShows = applyFilter(shows, tabFilterSelections[status.ordinal()]);
+            if (filteredShows.isEmpty()) {
                 showEmpty(true);
             } else {
                 showEmpty(false);
-                adapter.setShows(shows);
+                adapter.setShows(filteredShows);
             }
         });
+    }
+
+    private List<Show> applyFilter(List<Show> shows, WatchlistFilter filter) {
+        if (shows == null || shows.isEmpty() || filter == WatchlistFilter.ALL) {
+            return shows != null ? shows : new ArrayList<>();
+        }
+        List<Show> filtered = new ArrayList<>();
+        for (Show show : shows) {
+            if (show == null) {
+                continue;
+            }
+            if (filter == WatchlistFilter.MOVIES && "movie".equalsIgnoreCase(show.getType())) {
+                filtered.add(show);
+            } else if (filter == WatchlistFilter.SERIES && "series".equalsIgnoreCase(show.getType())) {
+                filtered.add(show);
+            }
+        }
+        return filtered;
     }
 
     private void openDetail(Show show) {

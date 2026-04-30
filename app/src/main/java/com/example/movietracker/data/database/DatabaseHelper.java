@@ -14,19 +14,33 @@ import com.example.movietracker.model.Show;
 import com.example.movietracker.model.WatchStatus;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
-    private static final int DATABASE_VERSION = 3;
+    public enum WatchlistSort {
+        RECENT,
+        TITLE_ASC,
+        TITLE_DESC,
+        SCORE_DESC
+    }
+    private static final int DATABASE_VERSION = 5;
     private static final String TABLE_SHOWS = "shows";
     private static final String COL_IMDB_ID = "imdb_id";
     private static final String COL_TITLE = "title";
     private static final String COL_YEAR = "year";
     private static final String COL_POSTER = "poster";
     private static final String COL_TYPE = "type";
+    private static final String COL_GENRE = "genre";
+    private static final String COL_LANGUAGE = "language";
     private static final String COL_IMDB_RATING = "imdb_rating";
     private static final String COL_STATUS = "status";
     private static final String COL_EPISODE_PROGRESS = "episode_progress";
+    private static final String COL_TOTAL_EPISODES = "total_episodes";
     private static final String COL_USER_SCORE = "user_score";
     private static final String COL_DATE_ADDED = "date_added";
 
@@ -37,9 +51,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         COL_YEAR + " TEXT, " +
         COL_POSTER + " TEXT, " +
         COL_TYPE + " TEXT, " +
+        COL_GENRE + " TEXT, " +
+        COL_LANGUAGE + " TEXT, " +
         COL_IMDB_RATING + " TEXT, " +
         COL_STATUS + " TEXT, " +
         COL_EPISODE_PROGRESS + " INTEGER DEFAULT 0, " +
+        COL_TOTAL_EPISODES + " INTEGER DEFAULT 0, " +
         COL_USER_SCORE + " REAL, " +
         COL_DATE_ADDED + " INTEGER)";
 
@@ -69,6 +86,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE " + TABLE_SHOWS + " ADD COLUMN " + COL_EPISODE_PROGRESS + " INTEGER DEFAULT 0");
             db.execSQL("ALTER TABLE " + TABLE_SHOWS + " ADD COLUMN " + COL_USER_SCORE + " REAL");
         }
+        if (oldVersion < 4) {
+            db.execSQL("ALTER TABLE " + TABLE_SHOWS + " ADD COLUMN " + COL_GENRE + " TEXT");
+        }
+        if (oldVersion < 5) {
+            db.execSQL("ALTER TABLE " + TABLE_SHOWS + " ADD COLUMN " + COL_LANGUAGE + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_SHOWS + " ADD COLUMN " + COL_TOTAL_EPISODES + " INTEGER DEFAULT 0");
+        }
     }
 
     public long insertShow(Show show, WatchStatus status) {
@@ -79,9 +103,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_YEAR, show.getYear());
         values.put(COL_POSTER, show.getPoster());
         values.put(COL_TYPE, show.getType());
+        values.put(COL_GENRE, show.getGenre());
+        values.put(COL_LANGUAGE, show.getLanguage());
         values.put(COL_IMDB_RATING, show.getImdbRating());
         values.put(COL_STATUS, status.name());
         values.put(COL_EPISODE_PROGRESS, show.getEpisodeProgress());
+        values.put(COL_TOTAL_EPISODES, show.getTotalEpisodes());
         if (show.getUserScore() != null) {
             values.put(COL_USER_SCORE, show.getUserScore());
         } else {
@@ -98,9 +125,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_YEAR, show.getYear());
         values.put(COL_POSTER, show.getPoster());
         values.put(COL_TYPE, show.getType());
+        values.put(COL_GENRE, show.getGenre());
+        values.put(COL_LANGUAGE, show.getLanguage());
         values.put(COL_IMDB_RATING, show.getImdbRating());
         values.put(COL_STATUS, status.name());
         values.put(COL_EPISODE_PROGRESS, show.getEpisodeProgress());
+        values.put(COL_TOTAL_EPISODES, show.getTotalEpisodes());
         if (show.getUserScore() != null) {
             values.put(COL_USER_SCORE, show.getUserScore());
         } else {
@@ -116,7 +146,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_YEAR, show.getYear());
         values.put(COL_POSTER, show.getPoster());
         values.put(COL_TYPE, show.getType());
+        values.put(COL_GENRE, show.getGenre());
+        values.put(COL_LANGUAGE, show.getLanguage());
         values.put(COL_IMDB_RATING, show.getImdbRating());
+        values.put(COL_TOTAL_EPISODES, show.getTotalEpisodes());
         return db.update(TABLE_SHOWS, values, COL_IMDB_ID + " = ?", new String[]{show.getImdbId()});
     }
 
@@ -137,9 +170,31 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public List<Show> getShowsByStatus(WatchStatus status) {
+        return getShowsByStatus(status, WatchlistSort.RECENT);
+    }
+
+    public List<Show> getShowsByStatus(WatchStatus status, WatchlistSort sort) {
         List<Show> shows = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.query(TABLE_SHOWS, null, COL_STATUS + " = ?", new String[]{status.name()}, null, null, COL_DATE_ADDED + " DESC");
+        String orderBy;
+        switch (sort) {
+            case TITLE_ASC:
+                orderBy = COL_TITLE + " COLLATE NOCASE ASC";
+                break;
+            case TITLE_DESC:
+                orderBy = COL_TITLE + " COLLATE NOCASE DESC";
+                break;
+            case SCORE_DESC:
+                orderBy = "CASE WHEN " + COL_USER_SCORE + " IS NULL THEN 1 ELSE 0 END, "
+                    + COL_USER_SCORE + " DESC, "
+                    + COL_DATE_ADDED + " DESC";
+                break;
+            case RECENT:
+            default:
+                orderBy = COL_DATE_ADDED + " DESC";
+                break;
+        }
+        Cursor cursor = db.query(TABLE_SHOWS, null, COL_STATUS + " = ?", new String[]{status.name()}, null, null, orderBy);
         while (cursor.moveToNext()) {
             shows.add(cursorToShow(cursor));
         }
@@ -156,6 +211,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         return shows;
+    }
+
+    public List<String> getTrackedImdbIds() {
+        List<String> imdbIds = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_SHOWS, new String[]{COL_IMDB_ID}, null, null, null, null, null);
+        while (cursor.moveToNext()) {
+            imdbIds.add(cursor.getString(0));
+        }
+        cursor.close();
+        return imdbIds;
     }
 
     public boolean isShowInList(String imdbId) {
@@ -235,6 +301,71 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return distribution;
     }
 
+    public Map<String, Integer> getReleaseYearDistribution() {
+        TreeMap<Integer, Integer> yearDistribution = new TreeMap<>();
+        for (Show show : getAllShows()) {
+            int year = parseReleaseYear(show.getYear());
+            if (year > 0) {
+                yearDistribution.put(year, yearDistribution.getOrDefault(year, 0) + 1);
+            }
+        }
+
+        LinkedHashMap<String, Integer> result = new LinkedHashMap<>();
+        for (Map.Entry<Integer, Integer> entry : yearDistribution.entrySet()) {
+            result.put(String.valueOf(entry.getKey()), entry.getValue());
+        }
+        return result;
+    }
+
+    public Map<String, Integer> getLanguageDistribution() {
+        HashMap<String, Integer> distribution = new HashMap<>();
+        for (Show show : getAllShows()) {
+            for (String language : parseLanguages(show.getLanguage())) {
+                distribution.put(language, distribution.getOrDefault(language, 0) + 1);
+            }
+        }
+
+        List<Map.Entry<String, Integer>> entries = new ArrayList<>(distribution.entrySet());
+        entries.sort((left, right) -> Integer.compare(right.getValue(), left.getValue()));
+
+        LinkedHashMap<String, Integer> sorted = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : entries) {
+            sorted.put(entry.getKey(), entry.getValue());
+        }
+        return sorted;
+    }
+
+    public Map<String, Integer> getEpisodeCountDistribution() {
+        LinkedHashMap<String, Integer> buckets = new LinkedHashMap<>();
+        buckets.put("1", 0);
+        buckets.put("2-12", 0);
+        buckets.put("13-24", 0);
+        buckets.put("25-50", 0);
+        buckets.put("50+", 0);
+
+        for (Show show : getAllShows()) {
+            int episodeCount = getTotalEpisodesForAnalytics(show);
+            if (episodeCount <= 0) {
+                continue;
+            }
+            String key;
+            if (episodeCount <= 1) {
+                key = "1";
+            } else if (episodeCount <= 12) {
+                key = "2-12";
+            } else if (episodeCount <= 24) {
+                key = "13-24";
+            } else if (episodeCount <= 50) {
+                key = "25-50";
+            } else {
+                key = "50+";
+            }
+            buckets.put(key, buckets.get(key) + 1);
+        }
+
+        return buckets;
+    }
+
     private Show cursorToShow(Cursor cursor) {
         Show show = new Show();
         show.setImdbId(cursor.getString(cursor.getColumnIndexOrThrow(COL_IMDB_ID)));
@@ -242,9 +373,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         show.setYear(cursor.getString(cursor.getColumnIndexOrThrow(COL_YEAR)));
         show.setPoster(cursor.getString(cursor.getColumnIndexOrThrow(COL_POSTER)));
         show.setType(cursor.getString(cursor.getColumnIndexOrThrow(COL_TYPE)));
+        show.setGenre(cursor.getString(cursor.getColumnIndexOrThrow(COL_GENRE)));
+        show.setLanguage(cursor.getString(cursor.getColumnIndexOrThrow(COL_LANGUAGE)));
         show.setImdbRating(cursor.getString(cursor.getColumnIndexOrThrow(COL_IMDB_RATING)));
         show.setWatchStatus(WatchStatus.fromString(cursor.getString(cursor.getColumnIndexOrThrow(COL_STATUS))));
         show.setEpisodeProgress(cursor.getInt(cursor.getColumnIndexOrThrow(COL_EPISODE_PROGRESS)));
+        show.setTotalEpisodes(cursor.getInt(cursor.getColumnIndexOrThrow(COL_TOTAL_EPISODES)));
         int userScoreIndex = cursor.getColumnIndexOrThrow(COL_USER_SCORE);
         if (cursor.isNull(userScoreIndex)) {
             show.setUserScore(null);
@@ -263,5 +397,60 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         return count;
+    }
+
+    private int parseReleaseYear(String yearText) {
+        if (yearText == null || yearText.trim().isEmpty()) {
+            return 0;
+        }
+        String trimmed = yearText.trim();
+        StringBuilder digits = new StringBuilder();
+        for (int i = 0; i < trimmed.length(); i++) {
+            char c = trimmed.charAt(i);
+            if (Character.isDigit(c)) {
+                digits.append(c);
+                if (digits.length() == 4) {
+                    break;
+                }
+            } else if (digits.length() > 0) {
+                break;
+            }
+        }
+        if (digits.length() != 4) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(digits.toString());
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
+
+    private List<String> parseLanguages(String languageText) {
+        if (languageText == null || languageText.trim().isEmpty() || "N/A".equalsIgnoreCase(languageText)) {
+            return Collections.emptyList();
+        }
+        String[] parts = languageText.split(",");
+        List<String> languages = new ArrayList<>();
+        for (String part : parts) {
+            String language = part.trim();
+            if (!language.isEmpty()) {
+                languages.add(language);
+            }
+        }
+        return languages;
+    }
+
+    private int getTotalEpisodesForAnalytics(Show show) {
+        if (show == null) {
+            return 0;
+        }
+        if (show.getTotalEpisodes() > 0) {
+            return show.getTotalEpisodes();
+        }
+        if (show.getEpisodeProgress() > 0) {
+            return show.getEpisodeProgress();
+        }
+        return 0;
     }
 }

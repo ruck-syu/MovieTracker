@@ -2,16 +2,33 @@ package com.example.movietracker.ui.profile;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.recyclerview.widget.RecyclerView;
-import com.example.movietracker.model.Show;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import com.example.movietracker.model.ListBackupPayload;
+import com.example.movietracker.model.RecommendationItem;
+import com.google.gson.Gson;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import androidx.appcompat.app.AlertDialog;
 
@@ -23,39 +40,21 @@ import com.example.movietracker.R;
 import com.example.movietracker.data.repository.ShowRepository;
 import com.example.movietracker.model.ProfileStats;
 
-import java.util.Locale;
-
-import android.content.Intent;
-import android.widget.Button;
-
 import com.example.movietracker.ui.login.LoginActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.UserProfileChangeRequest;
-
-import android.net.Uri;
-import android.widget.ImageView;
-import android.widget.Toast;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 public class ProfileFragment extends Fragment {
     private static final String PREFS_NAME = "movie_tracker_prefs";
     private static final String KEY_PROFILE_NAME = "profile_name";
     private static final String KEY_PROFILE_PIC_URI = "profile_pic_uri";
+    private static final int BACKUP_FORMAT_VERSION = 1;
 
     private ShowRepository repository;
+    private final Gson gson = new Gson();
 
     private TextView tvProfileName;
     private TextView tvTotalTracked;
@@ -66,12 +65,22 @@ public class ProfileFragment extends Fragment {
     private TextView tvSummary;
     private TextView tvProfileTier;
 
-    private FavoritesAdapter favoritesAdapter;
-    private View tvFavoritesTitle;
-    private RecyclerView rvFavorites;
+    private View cvReleaseYearAnalytics;
+    private View cvEpisodeAnalytics;
     private View tvAnalyticsTitle;
     private View cvAnalytics;
     private PieChartView pieChartView;
+    private LineChartView barReleaseYear;
+    private VerticalBarChartView barEpisodes;
+    private View tvRecommendationsTitle;
+    private TextView tvRecommendationsEmpty;
+    private androidx.recyclerview.widget.RecyclerView rvRecommendations;
+    private RecommendationsAdapter recommendationsAdapter;
+
+    private final ActivityResultLauncher<String> exportLauncher =
+        registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"), this::handleExportUri);
+    private final ActivityResultLauncher<String[]> importLauncher =
+        registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::handleImportUri);
 
     public ProfileFragment() {
         super(R.layout.fragment_profile);
@@ -99,17 +108,27 @@ public class ProfileFragment extends Fragment {
         tvSummary = view.findViewById(R.id.tvProfileSummary);
         tvProfileTier = view.findViewById(R.id.tvProfileTier);
 
-        tvFavoritesTitle = view.findViewById(R.id.tvFavoritesTitle);
-        rvFavorites = view.findViewById(R.id.rvFavorites);
         tvAnalyticsTitle = view.findViewById(R.id.tvAnalyticsTitle);
         cvAnalytics = view.findViewById(R.id.cvAnalytics);
         pieChartView = view.findViewById(R.id.pieChartView);
+        cvReleaseYearAnalytics = view.findViewById(R.id.cvReleaseYearAnalytics);
+        cvEpisodeAnalytics = view.findViewById(R.id.cvEpisodeAnalytics);
+        barReleaseYear = view.findViewById(R.id.barReleaseYear);
+        barEpisodes = view.findViewById(R.id.barEpisodes);
+        tvRecommendationsTitle = view.findViewById(R.id.tvRecommendationsTitle);
+        tvRecommendationsEmpty = view.findViewById(R.id.tvRecommendationsEmpty);
+        rvRecommendations = view.findViewById(R.id.rvRecommendations);
 
-        favoritesAdapter = new FavoritesAdapter();
-        rvFavorites.setAdapter(favoritesAdapter);
+        recommendationsAdapter = new RecommendationsAdapter();
+        rvRecommendations.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+        rvRecommendations.setAdapter(recommendationsAdapter);
 
         Button btnSignOut = view.findViewById(R.id.btnSignOut);
+        Button btnExportList = view.findViewById(R.id.btnExportList);
+        Button btnImportList = view.findViewById(R.id.btnImportList);
         btnSignOut.setOnClickListener(v -> signOut());
+        btnExportList.setOnClickListener(v -> exportList());
+        btnImportList.setOnClickListener(v -> importList());
 
         ImageView ivProfilePicture = view.findViewById(R.id.ivProfilePicture);
 
@@ -178,8 +197,20 @@ public class ProfileFragment extends Fragment {
 
     private void loadProfile() {
         repository.getProfileStats(this::bindProfile);
-        repository.getTopRatedShows(10, this::bindFavorites);
         repository.getTypeDistribution(this::bindAnalytics);
+        repository.getReleaseYearDistribution(this::bindReleaseYearAnalytics);
+        repository.getEpisodeCountDistribution(this::bindEpisodeAnalytics);
+        repository.getRecommendations(10, new ShowRepository.RecommendationsCallback() {
+            @Override
+            public void onSuccess(List<RecommendationItem> recommendations) {
+                bindRecommendations(recommendations);
+            }
+
+            @Override
+            public void onError(String error) {
+                showRecommendationEmpty(error);
+            }
+        });
     }
 
     private void bindProfile(ProfileStats stats) {
@@ -219,25 +250,130 @@ public class ProfileFragment extends Fragment {
         return "Newcomer";
     }
 
-    private void bindFavorites(List<Show> shows) {
-        if (shows != null && !shows.isEmpty()) {
-            tvFavoritesTitle.setVisibility(View.VISIBLE);
-            rvFavorites.setVisibility(View.VISIBLE);
-            favoritesAdapter.setShows(shows);
-        } else {
-            tvFavoritesTitle.setVisibility(View.GONE);
-            rvFavorites.setVisibility(View.GONE);
-        }
-    }
-
     private void bindAnalytics(Map<String, Integer> distribution) {
         if (distribution != null && !distribution.isEmpty()) {
-            tvAnalyticsTitle.setVisibility(View.VISIBLE);
             cvAnalytics.setVisibility(View.VISIBLE);
             pieChartView.setData(distribution);
         } else {
-            tvAnalyticsTitle.setVisibility(View.GONE);
             cvAnalytics.setVisibility(View.GONE);
+        }
+        refreshAnalyticsTitleVisibility();
+    }
+
+    private void bindReleaseYearAnalytics(Map<String, Integer> distribution) {
+        Map<String, Integer> prepared = limitTail(distribution, 10);
+        if (!prepared.isEmpty()) {
+            cvReleaseYearAnalytics.setVisibility(View.VISIBLE);
+            barReleaseYear.setData(prepared);
+        } else {
+            cvReleaseYearAnalytics.setVisibility(View.GONE);
+        }
+        refreshAnalyticsTitleVisibility();
+    }
+
+    private void bindEpisodeAnalytics(Map<String, Integer> distribution) {
+        if (distribution != null && !distribution.isEmpty()) {
+            cvEpisodeAnalytics.setVisibility(View.VISIBLE);
+            barEpisodes.setData(distribution);
+        } else {
+            cvEpisodeAnalytics.setVisibility(View.GONE);
+        }
+        refreshAnalyticsTitleVisibility();
+    }
+
+    private void bindRecommendations(List<RecommendationItem> recommendations) {
+        if (recommendations != null && !recommendations.isEmpty()) {
+            tvRecommendationsTitle.setVisibility(View.VISIBLE);
+            rvRecommendations.setVisibility(View.VISIBLE);
+            tvRecommendationsEmpty.setVisibility(View.GONE);
+            recommendationsAdapter.setRecommendations(recommendations);
+        } else {
+            showRecommendationEmpty(getString(R.string.recommendation_empty_default));
+        }
+    }
+
+    private void showRecommendationEmpty(String message) {
+        tvRecommendationsTitle.setVisibility(View.VISIBLE);
+        rvRecommendations.setVisibility(View.GONE);
+        tvRecommendationsEmpty.setVisibility(View.VISIBLE);
+        tvRecommendationsEmpty.setText(message != null ? message : getString(R.string.recommendation_empty_default));
+        recommendationsAdapter.setRecommendations(null);
+    }
+
+    private void exportList() {
+        String fileName = String.format(
+            Locale.getDefault(),
+            "movie-tracker-backup-%d.json",
+            System.currentTimeMillis());
+        exportLauncher.launch(fileName);
+    }
+
+    private void handleExportUri(Uri uri) {
+        if (uri == null) {
+            Toast.makeText(requireContext(), R.string.backup_export_cancelled, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        repository.getAllShows(shows -> {
+            ListBackupPayload payload = new ListBackupPayload();
+            payload.setVersion(BACKUP_FORMAT_VERSION);
+            payload.setExportedAt(System.currentTimeMillis());
+            payload.setShows(shows);
+
+            try (OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri)) {
+                if (outputStream == null) {
+                    Toast.makeText(requireContext(), R.string.backup_export_failed, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                outputStream.write(gson.toJson(payload).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                Toast.makeText(requireContext(), R.string.backup_export_success, Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), getString(R.string.backup_export_failed_with_error, e.getMessage()), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void importList() {
+        importLauncher.launch(new String[]{"application/json", "text/*"});
+    }
+
+    private void handleImportUri(Uri uri) {
+        if (uri == null) {
+            Toast.makeText(requireContext(), R.string.backup_import_cancelled, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try (InputStream inputStream = requireContext().getContentResolver().openInputStream(uri)) {
+            if (inputStream == null) {
+                Toast.makeText(requireContext(), R.string.backup_import_failed, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            ListBackupPayload payload = gson.fromJson(reader, ListBackupPayload.class);
+            if (payload == null || payload.getShows() == null) {
+                Toast.makeText(requireContext(), R.string.backup_import_invalid, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            repository.mergeImportedShows(payload.getShows(), new ShowRepository.ImportCallback() {
+                @Override
+                public void onSuccess(int importedCount) {
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.backup_import_success, importedCount),
+                        Toast.LENGTH_SHORT
+                    ).show();
+                    loadProfile();
+                }
+
+                @Override
+                public void onError(String error) {
+                    Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (Exception e) {
+            Toast.makeText(requireContext(), getString(R.string.backup_import_failed_with_error, e.getMessage()), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -253,5 +389,28 @@ public class ProfileFragment extends Fragment {
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
         });
+    }
+
+    private Map<String, Integer> limitTail(Map<String, Integer> source, int limit) {
+        LinkedHashMap<String, Integer> result = new LinkedHashMap<>();
+        if (source == null || source.isEmpty() || limit <= 0) {
+            return result;
+        }
+
+        List<Map.Entry<String, Integer>> entries = new ArrayList<>(source.entrySet());
+        int start = Math.max(0, entries.size() - limit);
+        for (int i = start; i < entries.size(); i++) {
+            Map.Entry<String, Integer> entry = entries.get(i);
+            result.put(entry.getKey(), entry.getValue());
+        }
+        return result;
+    }
+
+    private void refreshAnalyticsTitleVisibility() {
+        boolean hasAnyAnalytics =
+            cvAnalytics.getVisibility() == View.VISIBLE
+                || cvReleaseYearAnalytics.getVisibility() == View.VISIBLE
+                || cvEpisodeAnalytics.getVisibility() == View.VISIBLE;
+        tvAnalyticsTitle.setVisibility(hasAnyAnalytics ? View.VISIBLE : View.GONE);
     }
 }
