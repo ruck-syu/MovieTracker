@@ -8,7 +8,9 @@ android {
     compileSdk 34
 
     Properties properties = new Properties()
-    if (project.rootProject.file('local.properties').exists()) {
+    if (project.rootProject.file('.env').exists()) {
+        properties.load(project.rootProject.file('.env').newDataInputStream())
+    } else if (project.rootProject.file('local.properties').exists()) {
         properties.load(project.rootProject.file('local.properties').newDataInputStream())
     }
     def geminiApiKey = properties.getProperty('GEMINI_API_KEY', '""')
