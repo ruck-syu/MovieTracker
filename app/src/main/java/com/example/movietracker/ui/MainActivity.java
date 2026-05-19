@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG_LISTS = "tab_lists";
     private static final String TAG_SEARCH = "tab_search";
     private static final String TAG_PROFILE = "tab_profile";
+    private static final String TAG_CHAT = "tab_chat";
 
     private BottomNavigationView bottomNavigationView;
 
@@ -79,6 +80,9 @@ public class MainActivity extends AppCompatActivity {
         if (itemId == R.id.navigation_profile) {
             return new ProfileFragment();
         }
+        if (itemId == R.id.navigation_chat) {
+            return new com.example.movietracker.ui.chat.ChatFragment();
+        }
         return new WatchlistFragment();
     }
 
@@ -88,6 +92,9 @@ public class MainActivity extends AppCompatActivity {
         }
         if (itemId == R.id.navigation_profile) {
             return TAG_PROFILE;
+        }
+        if (itemId == R.id.navigation_chat) {
+            return TAG_CHAT;
         }
         return TAG_LISTS;
     }
@@ -99,6 +106,10 @@ public class MainActivity extends AppCompatActivity {
         }
         if (itemId == R.id.navigation_profile) {
             setTitle(R.string.title_profile);
+            return;
+        }
+        if (itemId == R.id.navigation_chat) {
+            setTitle(R.string.title_chat);
             return;
         }
         setTitle(R.string.title_my_list);

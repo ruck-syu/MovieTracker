@@ -200,15 +200,17 @@ public class ProfileFragment extends Fragment {
         repository.getTypeDistribution(this::bindAnalytics);
         repository.getReleaseYearDistribution(this::bindReleaseYearAnalytics);
         repository.getEpisodeCountDistribution(this::bindEpisodeAnalytics);
-        repository.getRecommendations(10, new ShowRepository.RecommendationsCallback() {
-            @Override
-            public void onSuccess(List<RecommendationItem> recommendations) {
-                bindRecommendations(recommendations);
-            }
-
-            @Override
-            public void onError(String error) {
-                showRecommendationEmpty(error);
+        repository.getTopRatedShows(10, shows -> {
+            if (shows != null && !shows.isEmpty()) {
+                List<RecommendationItem> topRatedItems = new ArrayList<>();
+                for (com.example.movietracker.model.Show show : shows) {
+                    if (show.getUserScore() != null) {
+                        topRatedItems.add(new RecommendationItem(show, show.getUserScore(), ""));
+                    }
+                }
+                bindRecommendations(topRatedItems);
+            } else {
+                showRecommendationEmpty(getString(R.string.recommendation_empty_default));
             }
         });
     }

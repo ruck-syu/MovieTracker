@@ -117,6 +117,7 @@
         android:background="@drawable/bg_button_primary"
         android:paddingTop="14dp"
         android:paddingBottom="14dp"
+        android:textColor="#FFFFFF"
         android:text="@string/detail_sheet_save_changes" />
 
     <Button
@@ -128,7 +129,7 @@
         android:paddingTop="14dp"
         android:paddingBottom="14dp"
         android:text="@string/detail_sheet_remove_from_list"
-        android:textColor="@android:color/white"
+        android:textColor="#FFFFFF"
         android:visibility="gone" />
 
 </LinearLayout>

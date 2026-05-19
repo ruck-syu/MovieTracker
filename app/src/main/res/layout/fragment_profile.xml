@@ -446,7 +446,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/bg_button_primary"
                 android:text="@string/backup_import"
-                android:textColor="@color/white" />
+                android:textColor="#FFFFFF" />
         </LinearLayout>
 
         <Button
@@ -457,7 +457,7 @@
             android:layout_marginBottom="24dp"
             android:background="@drawable/bg_button_danger"
             android:text="Sign Out"
-            android:textColor="@color/white" />
+            android:textColor="#FFFFFF" />
 
     </LinearLayout>
 

@@ -86,7 +86,7 @@ public class SearchFragment extends Fragment {
         types.add("Episode");
 
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
-            requireContext(), android.R.layout.simple_spinner_item, types);
+            requireContext(), R.layout.item_spinner, types);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spType.setAdapter(spinnerAdapter);
 

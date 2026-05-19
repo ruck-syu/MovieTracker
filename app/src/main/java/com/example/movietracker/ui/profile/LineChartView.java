@@ -54,11 +54,11 @@ public class LineChartView extends View {
         pointPaint.setColor(Color.parseColor("#1E88E5"));
         pointPaint.setStyle(Paint.Style.FILL);
 
-        labelPaint.setColor(Color.parseColor("#616161"));
+        labelPaint.setColor(Color.parseColor("#F8FAFC"));
         labelPaint.setTextSize(LABEL_TEXT_SIZE);
         labelPaint.setTextAlign(Paint.Align.CENTER);
-
-        valuePaint.setColor(Color.parseColor("#212121"));
+ 
+        valuePaint.setColor(Color.parseColor("#F8FAFC"));
         valuePaint.setTextSize(LABEL_TEXT_SIZE);
         valuePaint.setTextAlign(Paint.Align.CENTER);
     }

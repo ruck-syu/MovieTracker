@@ -1,5 +1,6 @@
 package com.example.movietracker.ui.detail;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -77,6 +78,18 @@ public class DetailActivity extends AppCompatActivity {
         contentLayout = findViewById(R.id.contentLayout);
 
         tvManageTracking.setOnClickListener(v -> showTrackingBottomSheet());
+        
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnShare).setOnClickListener(v -> {
+            if (currentShow != null) {
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("text/plain");
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, currentShow.getTitle());
+                String shareMessage = "Check out " + currentShow.getTitle() + " on IMDb:\nhttps://www.imdb.com/title/" + currentShow.getImdbId() + "/";
+                shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage);
+                startActivity(Intent.createChooser(shareIntent, "Share via"));
+            }
+        });
     }
 
     private void loadShowDetails() {
@@ -157,6 +170,10 @@ public class DetailActivity extends AppCompatActivity {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View sheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_tracking, null);
         dialog.setContentView(sheetView);
+        View bottomSheet = (View) sheetView.getParent();
+        if (bottomSheet != null) {
+            bottomSheet.setBackgroundResource(android.R.color.transparent);
+        }
 
         Spinner spSheetStatus = sheetView.findViewById(R.id.spSheetStatus);
         View layoutEpisodeControls = sheetView.findViewById(R.id.layoutEpisodeControls);
@@ -170,7 +187,7 @@ public class DetailActivity extends AppCompatActivity {
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
             this,
-            android.R.layout.simple_spinner_item,
+            R.layout.item_spinner,
             new String[]{
                 WatchStatus.WATCHING.getDisplayName(),
                 WatchStatus.PLANNED.getDisplayName(),
