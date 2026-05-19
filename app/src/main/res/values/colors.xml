@@ -1,19 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- BACKUP: Original Light Blue Theme
     <color name="primary">#6A89A7</color>
     <color name="primary_dark">#384959</color>
     <color name="accent">#88BDF2</color>
     <color name="primary_light">#BDDDDC</color>
-    
     <color name="surface">#F5F8FA</color>
     <color name="card_background">#FFFFFF</color>
     <color name="surface_stroke">#BDDDDC</color>
-    
     <color name="danger">#E53935</color>
     <color name="danger_dark">#B71C1C</color>
-    
     <color name="white">#FFFFFF</color>
     <color name="black">#384959</color>
     <color name="gray">#6A89A7</color>
     <color name="light_gray">#E2E8F0</color>
+    -->
+
+    <!-- NEW: Premium Slate & Violet Dark Theme -->
+    <color name="primary">#7C3AED</color> <!-- Violet 600 -->
+    <color name="primary_dark">#5B21B6</color> <!-- Violet 800 -->
+    <color name="accent">#10B981</color> <!-- Emerald 500 for high contrast accents -->
+    <color name="primary_light">#C4B5FD</color> <!-- Violet 300 -->
+    
+    <color name="surface">#0F172A</color> <!-- Slate 900 (Background) -->
+    <color name="card_background">#1E293B</color> <!-- Slate 800 (Cards) -->
+    <color name="surface_stroke">#334155</color> <!-- Slate 700 (Borders) -->
+    
+    <color name="danger">#EF4444</color> <!-- Red 500 -->
+    <color name="danger_dark">#B91C1C</color> <!-- Red 700 -->
+    
+    <color name="white">#1E293B</color> <!-- Reversing white for dark mode cards if used directly -->
+    <color name="black">#F8FAFC</color> <!-- Primary Text Color (Slate 50) -->
+    <color name="gray">#94A3B8</color> <!-- Secondary Text Color (Slate 400) -->
+    <color name="light_gray">#334155</color> <!-- Dividers (Slate 700) -->
 </resources>

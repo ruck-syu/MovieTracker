@@ -47,11 +47,11 @@ public class VerticalBarChartView extends View {
         barPaint.setColor(Color.parseColor("#66BB6A"));
         barPaint.setStyle(Paint.Style.FILL);
 
-        valuePaint.setColor(Color.parseColor("#212121"));
+        valuePaint.setColor(Color.parseColor("#F8FAFC"));
         valuePaint.setTextAlign(Paint.Align.CENTER);
         valuePaint.setTextSize(LABEL_TEXT_SIZE);
 
-        labelPaint.setColor(Color.parseColor("#616161"));
+        labelPaint.setColor(Color.parseColor("#F8FAFC"));
         labelPaint.setTextAlign(Paint.Align.CENTER);
         labelPaint.setTextSize(LABEL_TEXT_SIZE);
     }

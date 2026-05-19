@@ -131,7 +131,7 @@ public class WatchlistFragment extends Fragment {
 
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
             requireContext(),
-            android.R.layout.simple_spinner_item,
+            R.layout.item_spinner,
             sortOptions
         );
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -162,7 +162,7 @@ public class WatchlistFragment extends Fragment {
 
         ArrayAdapter<String> filterAdapter = new ArrayAdapter<>(
             requireContext(),
-            android.R.layout.simple_spinner_item,
+            R.layout.item_spinner,
             filterOptions
         );
         filterAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
