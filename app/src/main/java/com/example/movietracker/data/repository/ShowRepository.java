@@ -89,6 +89,31 @@ public class ShowRepository {
     }
 
     public void searchShows(String query, String type, int page, SearchCallback callback) {
+        apiService.getShowByTitle(query, ApiClient.API_KEY).enqueue(new Callback<Show>() {
+            @Override
+            public void onResponse(Call<Show> call, Response<Show> titleResponse) {
+                Show exactMatch = null;
+                if (titleResponse.isSuccessful() && titleResponse.body() != null) {
+                    Show tempMatch = titleResponse.body();
+                    if (tempMatch.getTitle() != null && tempMatch.getImdbId() != null) {
+                        if (type == null || type.isEmpty() || type.equalsIgnoreCase(tempMatch.getType())) {
+                            exactMatch = tempMatch;
+                        }
+                    }
+                }
+                
+                final Show finalExactMatch = exactMatch;
+                performSearchQuery(query, type, page, finalExactMatch, callback);
+            }
+
+            @Override
+            public void onFailure(Call<Show> call, Throwable t) {
+                performSearchQuery(query, type, page, null, callback);
+            }
+        });
+    }
+
+    private void performSearchQuery(String query, String type, int page, Show exactMatch, SearchCallback callback) {
         apiService.searchShows(query, ApiClient.API_KEY, type, page).enqueue(new Callback<SearchResponse>() {
             @Override
             public void onResponse(Call<SearchResponse> call, Response<SearchResponse> response) {
@@ -99,21 +124,110 @@ public class ShowRepository {
                         try {
                             total = Integer.parseInt(searchResponse.getTotalResults());
                         } catch (NumberFormatException ignored) {}
-                        callback.onSuccess(searchResponse.getSearch(), total);
+                        mergeAndReturnResults(searchResponse.getSearch(), total, exactMatch, callback);
                     } else {
-                        callback.onError(searchResponse.getError() != null ?
-                            searchResponse.getError() : "No results found");
+                        if ("Too many results.".equalsIgnoreCase(searchResponse.getError())) {
+                            String fallbackQuery;
+                            if ("movie".equalsIgnoreCase(type)) {
+                                fallbackQuery = query + " movie";
+                            } else if ("series".equalsIgnoreCase(type)) {
+                                fallbackQuery = query + " series";
+                            } else {
+                                fallbackQuery = query + " movie";
+                            }
+
+                            apiService.searchShows(fallbackQuery, ApiClient.API_KEY, type, page).enqueue(new Callback<SearchResponse>() {
+                                @Override
+                                public void onResponse(Call<SearchResponse> call, Response<SearchResponse> fallbackResponse) {
+                                    if (fallbackResponse.isSuccessful() && fallbackResponse.body() != null) {
+                                        SearchResponse fallbackSearchResponse = fallbackResponse.body();
+                                        if (fallbackSearchResponse.isSuccess()) {
+                                            int total = 0;
+                                            try {
+                                                total = Integer.parseInt(fallbackSearchResponse.getTotalResults());
+                                            } catch (NumberFormatException ignored) {}
+                                            mergeAndReturnResults(fallbackSearchResponse.getSearch(), total, exactMatch, callback);
+                                            return;
+                                        }
+                                    }
+
+                                    if (type == null || type.isEmpty()) {
+                                        apiService.searchShows(query + " series", ApiClient.API_KEY, type, page).enqueue(new Callback<SearchResponse>() {
+                                            @Override
+                                            public void onResponse(Call<SearchResponse> call, Response<SearchResponse> seriesResponse) {
+                                                if (seriesResponse.isSuccessful() && seriesResponse.body() != null) {
+                                                    SearchResponse seriesSearchResponse = seriesResponse.body();
+                                                    if (seriesSearchResponse.isSuccess()) {
+                                                        int total = 0;
+                                                        try {
+                                                            total = Integer.parseInt(seriesSearchResponse.getTotalResults());
+                                                        } catch (NumberFormatException ignored) {}
+                                                        mergeAndReturnResults(seriesSearchResponse.getSearch(), total, exactMatch, callback);
+                                                        return;
+                                                    }
+                                                }
+                                                handleSearchFailure(searchResponse.getError(), exactMatch, callback);
+                                            }
+
+                                            @Override
+                                            public void onFailure(Call<SearchResponse> call, Throwable t) {
+                                                handleSearchFailure(searchResponse.getError(), exactMatch, callback);
+                                            }
+                                        });
+                                    } else {
+                                        handleSearchFailure(searchResponse.getError(), exactMatch, callback);
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<SearchResponse> call, Throwable t) {
+                                    handleSearchFailure(searchResponse.getError(), exactMatch, callback);
+                                }
+                            });
+                        } else {
+                            handleSearchFailure(searchResponse.getError(), exactMatch, callback);
+                        }
                     }
                 } else {
-                    callback.onError("Failed to fetch results");
+                    handleSearchFailure("Failed to fetch results", exactMatch, callback);
                 }
             }
 
             @Override
             public void onFailure(Call<SearchResponse> call, Throwable t) {
-                callback.onError("Network error: " + t.getMessage());
+                handleSearchFailure("Network error: " + t.getMessage(), exactMatch, callback);
             }
         });
+    }
+
+    private void mergeAndReturnResults(List<Show> searchList, int totalResults, Show exactMatch, SearchCallback callback) {
+        List<Show> mergedList = new ArrayList<>();
+        int extraCount = 0;
+
+        if (exactMatch != null) {
+            mergedList.add(exactMatch);
+            extraCount = 1;
+        }
+
+        if (searchList != null) {
+            for (Show s : searchList) {
+                if (exactMatch == null || !s.getImdbId().equalsIgnoreCase(exactMatch.getImdbId())) {
+                    mergedList.add(s);
+                }
+            }
+        }
+
+        callback.onSuccess(mergedList, totalResults + extraCount);
+    }
+
+    private void handleSearchFailure(String error, Show exactMatch, SearchCallback callback) {
+        if (exactMatch != null) {
+            List<Show> singleList = new ArrayList<>();
+            singleList.add(exactMatch);
+            callback.onSuccess(singleList, 1);
+        } else {
+            callback.onError(error != null ? error : "No results found");
+        }
     }
 
     public void getShowDetails(String imdbId, DetailCallback callback) {

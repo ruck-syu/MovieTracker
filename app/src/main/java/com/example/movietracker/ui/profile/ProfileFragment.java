@@ -224,9 +224,9 @@ public class ProfileFragment extends Fragment {
         tvProfileTier.setText(getUserTier(stats.getCompletedCount()));
 
         if (stats.hasAverageRating()) {
-            tvAverageRating.setText(String.format(Locale.getDefault(), "%.1f / 10", stats.getAverageRating()));
+            tvAverageRating.setText(String.format(Locale.getDefault(), "%.1f", stats.getAverageRating()));
         } else {
-            tvAverageRating.setText(R.string.profile_no_ratings);
+            tvAverageRating.setText("—");
         }
 
         if (stats.getTotalTracked() == 0) {

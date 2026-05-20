@@ -97,6 +97,8 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="96dp"
+                    android:gravity="center_vertical"
                     android:background="@color/card_background"
                     android:orientation="vertical"
                     android:padding="16dp">
@@ -133,6 +135,8 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="96dp"
+                    android:gravity="center_vertical"
                     android:background="@color/card_background"
                     android:orientation="vertical"
                     android:padding="16dp">
@@ -177,6 +181,8 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="96dp"
+                    android:gravity="center_vertical"
                     android:background="@color/card_background"
                     android:orientation="vertical"
                     android:padding="16dp">
@@ -185,9 +191,9 @@
                         android:id="@+id/tvProfileAverageRating"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/profile_no_ratings"
+                        android:text="—"
                         android:textColor="@color/black"
-                        android:textSize="20sp"
+                        android:textSize="28sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -213,6 +219,8 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="96dp"
+                    android:gravity="center_vertical"
                     android:background="@color/card_background"
                     android:orientation="vertical"
                     android:padding="16dp">

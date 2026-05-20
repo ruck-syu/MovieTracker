@@ -1,5 +1,6 @@
 package com.example.movietracker.ui.chat;
 
+import android.content.Intent;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.movietracker.R;
+import com.example.movietracker.ui.detail.DetailActivity;
 
 import java.util.List;
 
@@ -29,7 +31,28 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     @Override
     public ChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if (markwon == null) {
-            markwon = Markwon.create(parent.getContext());
+            markwon = Markwon.builder(parent.getContext())
+                .usePlugin(new io.noties.markwon.AbstractMarkwonPlugin() {
+                    @Override
+                    public void configureConfiguration(@NonNull io.noties.markwon.MarkwonConfiguration.Builder builder) {
+                        builder.linkResolver(new io.noties.markwon.LinkResolver() {
+                            @Override
+                            public void resolve(@NonNull View view, @NonNull String link) {
+                                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("tt\\d{7,}").matcher(link);
+                                if (matcher.find()) {
+                                    String imdbId = matcher.group();
+                                    android.content.Context context = view.getContext();
+                                    Intent intent = new Intent(context, DetailActivity.class);
+                                    intent.putExtra(DetailActivity.EXTRA_IMDB_ID, imdbId);
+                                    context.startActivity(intent);
+                                } else {
+                                    new io.noties.markwon.LinkResolverDef().resolve(view, link);
+                                }
+                            }
+                        });
+                    }
+                })
+                .build();
         }
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_message, parent, false);
         return new ChatViewHolder(view);
@@ -39,6 +62,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         ChatMessage message = messages.get(position);
         markwon.setMarkdown(holder.textMessage, message.getText());
+        holder.textMessage.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
 
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) holder.textMessage.getLayoutParams();
         if (message.isUser()) {
