@@ -9,10 +9,13 @@ import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
 
+import retrofit2.http.Path;
+
 public interface GeminiApiService {
     @Headers("Content-Type: application/json")
-    @POST("v1beta/models/gemini-2.5-flash:generateContent")
+    @POST("v1beta/models/{model}:generateContent")
     Call<GeminiResponse> generateContent(
+        @Path("model") String model,
         @Query("key") String apiKey,
         @Body GeminiRequest request
     );
